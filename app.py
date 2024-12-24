@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import sqlite3
 import random
+import re
 
 class FlashcardQuizApp:
     def __init__(self, root):
@@ -9,9 +10,7 @@ class FlashcardQuizApp:
         self.root.title("Flashcard Quiz Game")
         self.root.geometry("800x500")
         self.root.configure(bg="#2b2b2b")
-
-  
-        
+        self.root.state("zoomed")
         self.database_name = "quiz_game.db"
         self.current_field = None
         self.current_questions = []
@@ -19,41 +18,42 @@ class FlashcardQuizApp:
         self.score = 0
         self.user_name = ""
         self.user_email = ""
+        self.count = 1
+        self.timer_id = None  # Store the ID of the scheduled timer
         self.create_signup_screen()
 
     def fetch_questions(self, field):
         fields = {
-          'gk': 'gk_questions',
-          'grammer': 'grammer_questions',
-          'sports': 'sport_questions',
-          'math': 'math_questions',
-          'poetry': 'poetry_questions',
-          'technology': 'technology_questions'
+            'gk': 'gk_questions',
+            'grammer': 'grammer_questions',
+            'sports': 'sport_questions',
+            'math': 'math_questions',
+            'poetry': 'poetry_questions',
+            'technology': 'technology_questions'
         }
-      
+
         table_name = fields.get(field)
         conn = sqlite3.connect('app_data.sqlite')
         cursor = conn.cursor()
         cursor.execute(f"SELECT question_text, answer, option1, option2, option3, option4 FROM {table_name}")
         questions = cursor.fetchall()
         conn.close()
-        # self.total_q = len(questions)
         return questions
 
     def create_signup_screen(self):
         """Create a signup screen for user details."""
         self.clear_screen()
 
-        signup_frame = tk.Frame(self.root, bg="#3a3a3a", padx=20, pady=20, relief="groove", bd=5)
+        signup_frame = tk.Frame(self.root, bg="#3a3a3a", padx=20, pady=20, relief="groove", bd=5, width=80, height=500)
         signup_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         tk.Label(signup_frame, text="Sign Up", font=("Arial", 28, "bold"), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
         tk.Label(signup_frame, text="Enter your name:", font=("Arial", 18), bg="#3a3a3a", fg="#ffffff").pack(pady=5)
-        self.name_entry = tk.Entry(signup_frame, font=("Arial", 16), width=50)
+        self.name_entry = tk.Entry(signup_frame, font=("Arial", 16), width=20)
         self.name_entry.pack(pady=5)
 
         tk.Label(signup_frame, text="Enter your email:", font=("Arial", 18), bg="#3a3a3a", fg="#ffffff").pack(pady=5)
-        self.email_entry = tk.Entry(signup_frame, font=("Arial", 16), width=50)
+        self.email_entry = tk.Entry(signup_frame, font=("Arial", 16), width=20)
         self.email_entry.pack(pady=5)
 
         tk.Button(
@@ -71,15 +71,45 @@ class FlashcardQuizApp:
         self.user_name = self.name_entry.get().strip()
         self.user_email = self.email_entry.get().strip()
 
+        # Validate name and email
         if not self.user_name or not self.user_email:
             messagebox.showerror("Error", "Please fill out all fields!")
+            return
+
+        if not self.is_valid_name(self.user_name):
+            messagebox.showerror("Error", "Name should only contain letters and spaces!")
+            return
+
+        if not self.is_valid_email(self.user_email):
+            messagebox.showerror("Error", "Please enter a valid email address!")
+            return
+
+        # Check if the user already exists in the database
+        conn = sqlite3.connect('app_data.sqlite')
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user WHERE user_gmail = ?", (self.user_email,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            # User already exists, skip insertion
+            messagebox.showinfo("Welcome Back!", f"Welcome back, {self.user_name}!")
         else:
-            conn = sqlite3.connect('app_data.sqlite')
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO user (user_name,user_gmail) VALUES (?, ?)", (self.user_name, self.user_email))
+            # Save the user information to the database if they don't exist
+            cursor.execute("INSERT INTO user (user_name, user_gmail) VALUES (?, ?)", (self.user_name, self.user_email))
             conn.commit()
-            conn.close()
-            self.create_home_screen()
+            messagebox.showinfo("Welcome!", f"Welcome, {self.user_name}!")
+
+        conn.close()
+        self.create_home_screen()
+
+    def is_valid_name(self, name):
+        """Check if the name contains only alphabets and spaces."""
+        return name.replace(" ", "").isalpha()
+
+    def is_valid_email(self, email):
+        """Check if the email follows a valid pattern."""
+        email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return re.match(email_regex, email) is not None
 
     def create_home_screen(self):
         """Create the home screen where users select the quiz field."""
@@ -120,7 +150,12 @@ class FlashcardQuizApp:
         """Display a question for the user to answer."""
         self.clear_screen()
 
-        question_frame = tk.Frame(self.root, bg="#3a3a3a", padx=50, pady=50, relief="groove", bd=8)
+        # Cancel any existing timer if exists
+        if self.timer_id:
+            self.root.after_cancel(self.timer_id)
+            self.timer_id = None
+
+        question_frame = tk.Frame(self.root, bg="#3a3a3a", padx=50, pady=50, relief="groove", bd=8, width=50)
         question_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         if len(self.current_questions) == 0:  # No questions left
@@ -133,13 +168,13 @@ class FlashcardQuizApp:
         self.current_question = {
             "question": question_data[0],
             "answer": question_data[1],
-            "options": question_data[2:]
+            "options": question_data[2:],
         }
 
         tk.Label(question_frame, text=f"Field: {self.current_field}", font=("Arial", 16), bg="#3a3a3a", fg="white").pack(pady=10)
         tk.Label(question_frame, text=f"Score: {self.score}", font=("Arial", 14), bg="#3a3a3a", fg="white").pack(pady=5)
-        tk.Label(question_frame, text=self.current_question["question"], font=("Arial", 14), wraplength=500, bg="#3a3a3a", fg="white").pack(pady=20)
-
+        tk.Label(question_frame, text=f"Q{self.count}: {self.current_question['question']}", font=("Arial", 14), wraplength=500, bg="#3a3a3a", fg="white").pack(pady=20)
+        self.count += 1
         self.selected_option = tk.StringVar(value="")
         for option in self.current_question["options"]:
             tk.Radiobutton(
@@ -174,9 +209,10 @@ class FlashcardQuizApp:
         if self.time_left > 0:
             self.time_left -= 1
             self.timer_label.config(text=f"Time Left: {self.time_left}s")
-            self.root.after(1000, self.update_timer)
+            self.timer_id = self.root.after(1000, self.update_timer)
         else:
-            self.ask_question()  # Proceed with the next question after time runs out
+            self.timer_id = None  # Clear the timer ID when time runs out
+            self.ask_question()  # Proceed with the next question
 
     def check_answer(self):
         """Check if the selected answer is correct and move to the next question."""
@@ -197,15 +233,32 @@ class FlashcardQuizApp:
         """Display the final result after the quiz."""
         self.clear_screen()
 
+        # Fetch total questions for the selected field
+        total_questions = len(self.fetch_questions(self.current_field))
+        percentage = (self.score / total_questions) * 100 if total_questions > 0 else 0
+
+        # Determine a motivational message
+        if percentage == 100:
+            message = "Outstanding! Perfect Score! 🎉"
+        elif percentage >= 75:
+            message = "Great job! You're really good at this! 👍"
+        elif percentage >= 50:
+            message = "Good effort! Keep practicing! 🙂"
+        else:
+            message = "Don't give up! You'll get better with more practice. 💪"
+
+        # Result screen layout
         result_frame = tk.Frame(self.root, bg="#3a3a3a", padx=35, pady=35, relief="groove", bd=5)
         result_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         tk.Label(result_frame, text="Quiz Complete!", font=("Arial", 18, "bold"), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
-        tk.Label(result_frame, text=f"Your Final Score: {self.score}", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").pack(pady=20)
+        tk.Label(result_frame, text=f"Your Final Score: {self.score} / {total_questions}", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
+        tk.Label(result_frame, text=f"Percentage: {percentage:.2f}%", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
+        tk.Label(result_frame, text=message, font=("Arial", 14), bg="#3a3a3a", fg="#ffffff").pack(pady=20)
 
         tk.Button(
             result_frame,
-            text="Back to Home",
+            text="Another Quiz",
             font=("Arial", 14),
             bg="#4CAF50",
             fg="white",
@@ -213,17 +266,27 @@ class FlashcardQuizApp:
             command=self.create_home_screen,
         ).pack(pady=20)
 
+        tk.Button(
+            result_frame,
+            text="Quit Game",
+            font=("Arial", 14),
+            bg="#f44336",  # Red color for the quit button
+            fg="white",
+            width=15,
+            command=self.quit_game,  # Call the quit_game method when clicked
+        ).pack(pady=10)
+
     def clear_screen(self):
         """Clear the current screen."""
         for widget in self.root.winfo_children():
             widget.destroy()
 
+    def quit_game(self):
+        """Quit the game and close the application."""
+        self.root.quit()
+
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = FlashcardQuizApp(root)
     root.mainloop()
-import tkinter as tk
-from tkinter import messagebox
-import sqlite3
-import random
-
