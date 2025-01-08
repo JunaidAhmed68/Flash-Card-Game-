@@ -3,13 +3,12 @@ from tkinter import messagebox
 import sqlite3
 import random
 import re
-
 class FlashcardQuizApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Flashcard Quiz Game")
         self.root.geometry("800x500")
-        self.root.configure(bg="#2b2b2b")
+        self.root.configure(bg="#40E0D0")
         self.root.state("zoomed")
         self.database_name = "quiz_game.db"
         self.current_field = None
@@ -44,15 +43,16 @@ class FlashcardQuizApp:
         """Create a signup screen for user details."""
         self.clear_screen()
 
-        signup_frame = tk.Frame(self.root, bg="#3a3a3a", padx=20, pady=20, relief="groove", bd=5, width=80, height=500)
+        signup_frame = tk.Frame(self.root, bg="#ECDCD5", padx=20, pady=20, relief="groove", bd=0,highlightbackground="#FF7F50",
+        highlightthickness=2, width=80, height=500)
         signup_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        tk.Label(signup_frame, text="Sign Up", font=("Arial", 28, "bold"), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
-        tk.Label(signup_frame, text="Enter your name:", font=("Arial", 18), bg="#3a3a3a", fg="#ffffff").pack(pady=5)
+        tk.Label(signup_frame, text="Sign Up", font=("Arial", 28, "bold"), bg="#ECDCD5", fg="black").pack(pady=10)
+        tk.Label(signup_frame, text="Enter your name:", font=("Arial", 18), bg="#ECDCD5", fg="black").pack(pady=5)
         self.name_entry = tk.Entry(signup_frame, font=("Arial", 16), width=20)
         self.name_entry.pack(pady=5)
 
-        tk.Label(signup_frame, text="Enter your email:", font=("Arial", 18), bg="#3a3a3a", fg="#ffffff").pack(pady=5)
+        tk.Label(signup_frame, text="Enter your email:", font=("Arial", 18), bg="#ECDCD5", fg="black").pack(pady=5)
         self.email_entry = tk.Entry(signup_frame, font=("Arial", 16), width=20)
         self.email_entry.pack(pady=5)
 
@@ -60,8 +60,8 @@ class FlashcardQuizApp:
             signup_frame,
             text="Submit",
             font=("Arial", 14),
-            bg="#4CAF50",
-            fg="white",
+            bg="#40E0D0",
+            fg="black",
             width=15,
             command=self.save_user_info,
         ).pack(pady=20)
@@ -115,12 +115,12 @@ class FlashcardQuizApp:
         """Create the home screen where users select the quiz field."""
         self.clear_screen()
 
-        home_frame = tk.Frame(self.root, bg="#3a3a3a", padx=10, pady=10, relief="groove", bd=5)
+        home_frame = tk.Frame(self.root, bg="#ECDCD5", padx=10, pady=10, relief="groove", bd=5)
         home_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        tk.Label(home_frame, text=f"Welcome, {self.user_name}!", font=("Arial", 24, "bold"), bg="#3a3a3a", fg="#ffffff").grid(row=0, column=0, columnspan=3, pady=20)
+        tk.Label(home_frame, text=f"Welcome, {self.user_name}!", font=("Arial", 24, "bold"), bg="#ECDCD5", fg="black").grid(row=0, column=0, columnspan=3, pady=20)
 
-        tk.Label(home_frame, text="Choose a Field:", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").grid(row=1, column=0, columnspan=3, pady=10)
+        tk.Label(home_frame, text="Choose a Field:", font=("Arial", 16), bg="#ECDCD5", fg="black").grid(row=1, column=0, columnspan=3, pady=10)
 
         fields = ["GK", "Grammer", "Sports", "Math", "Poetry", "Technology"]
 
@@ -132,8 +132,8 @@ class FlashcardQuizApp:
                 home_frame,
                 text=field,
                 font=("Arial", 14),
-                bg="#4CAF50",
-                fg="white",
+                bg="#40E0D0",
+                fg="black",
                 width=15,
                 height=2,
                 command=lambda f=field.lower(): self.start_quiz(f),
@@ -155,7 +155,8 @@ class FlashcardQuizApp:
             self.root.after_cancel(self.timer_id)
             self.timer_id = None
 
-        question_frame = tk.Frame(self.root, bg="#3a3a3a", padx=50, pady=50, relief="groove", bd=8, width=50)
+        question_frame = tk.Frame(self.root, bg="#ECDCD5", padx=50, pady=50, relief="groove",  bd=0,highlightbackground="#FF7F50",
+        highlightthickness=2, width=50)
         question_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         if len(self.current_questions) == 0:  # No questions left
@@ -171,9 +172,9 @@ class FlashcardQuizApp:
             "options": question_data[2:],
         }
 
-        tk.Label(question_frame, text=f"Field: {self.current_field}", font=("Arial", 16), bg="#3a3a3a", fg="white").pack(pady=10)
-        tk.Label(question_frame, text=f"Score: {self.score}", font=("Arial", 14), bg="#3a3a3a", fg="white").pack(pady=5)
-        tk.Label(question_frame, text=f"Q{self.count}: {self.current_question['question']}", font=("Arial", 14), wraplength=500, bg="#3a3a3a", fg="white").pack(pady=20)
+        tk.Label(question_frame, text=f"Field: {self.current_field}", font=("Arial", 16), bg="#ECDCD5", fg="black").pack(pady=10)
+        tk.Label(question_frame, text=f"Score: {self.score}", font=("Arial", 14), bg="#ECDCD5", fg="black").pack(pady=5)
+        tk.Label(question_frame, text=f"Q{self.count}: {self.current_question['question']}", font=("Arial", 14), wraplength=500, bg="#ECDCD5", fg="black").pack(pady=20)
         self.count += 1
         self.selected_option = tk.StringVar(value="")
         for option in self.current_question["options"]:
@@ -183,12 +184,12 @@ class FlashcardQuizApp:
                 variable=self.selected_option,
                 value=option,
                 font=("Arial", 14),
-                bg="#3a3a3a",
-                fg="#ffffff",
-                selectcolor="black",
+                bg="#ECDCD5",
+                fg="black",
+                selectcolor="white",
             ).pack(anchor="w", padx=20, pady=5)
 
-        self.timer_label = tk.Label(question_frame, text="Time Left: 30s", font=("Arial", 14), bg="#3a3a3a", fg="white")
+        self.timer_label = tk.Label(question_frame, text="Time Left: 30s", font=("Arial", 14), bg="#ECDCD5", fg="black")
         self.timer_label.pack(pady=10)
 
         self.time_left = 30  # Reset the timer for this question
@@ -198,9 +199,10 @@ class FlashcardQuizApp:
             question_frame,
             text="Submit Answer",
             font=("Arial", 14),
-            bg="green",
-            fg="white",
-            width=15,
+            bg="#40E0D0",
+            fg="black",
+            width=15,bd=0,highlightbackground="#FF7F50",
+        highlightthickness=2,
             command=self.check_answer,
         ).pack(pady=10)
 
@@ -248,20 +250,21 @@ class FlashcardQuizApp:
             message = "Don't give up! You'll get better with more practice. 💪"
 
         # Result screen layout
-        result_frame = tk.Frame(self.root, bg="#3a3a3a", padx=35, pady=35, relief="groove", bd=5)
+        result_frame = tk.Frame(self.root, bg="#ECDCD5", padx=35, pady=35, relief="groove", bd=0,highlightbackground="#FF7F50",
+        highlightthickness=2,)
         result_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        tk.Label(result_frame, text="Quiz Complete!", font=("Arial", 18, "bold"), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
-        tk.Label(result_frame, text=f"Your Final Score: {self.score} / {total_questions}", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
-        tk.Label(result_frame, text=f"Percentage: {percentage:.2f}%", font=("Arial", 16), bg="#3a3a3a", fg="#ffffff").pack(pady=10)
-        tk.Label(result_frame, text=message, font=("Arial", 14), bg="#3a3a3a", fg="#ffffff").pack(pady=20)
+        tk.Label(result_frame, text="Quiz Complete!", font=("Arial", 18, "bold"), bg="#ECDCD5", fg="black").pack(pady=10)
+        tk.Label(result_frame, text=f"Your Final Score: {self.score} / {total_questions}", font=("Arial", 16), bg="#ECDCD5", fg="black").pack(pady=10)
+        tk.Label(result_frame, text=f"Percentage: {percentage:.2f}%", font=("Arial", 16), bg="#ECDCD5", fg="black").pack(pady=10)
+        tk.Label(result_frame, text=message, font=("Arial", 14), bg="#ECDCD5", fg="black").pack(pady=20)
 
         tk.Button(
             result_frame,
             text="Another Quiz",
             font=("Arial", 14),
-            bg="#4CAF50",
-            fg="white",
+            bg="#40E0D0",
+            fg="black",
             width=15,
             command=self.create_home_screen,
         ).pack(pady=20)
@@ -270,8 +273,8 @@ class FlashcardQuizApp:
             result_frame,
             text="Quit Game",
             font=("Arial", 14),
-            bg="#f44336",  # Red color for the quit button
-            fg="white",
+            bg="#40E0D0",  # Red color for the quit button
+            fg="black",
             width=15,
             command=self.quit_game,  # Call the quit_game method when clicked
         ).pack(pady=10)
